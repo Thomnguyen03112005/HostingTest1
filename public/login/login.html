@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            margin-bottom: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        #otpSection {
+            display: none; /* Ẩn khung OTP mặc định */
+            margin-top: 10px;
+        }
+        #createAccountButton {
+            display: none; /* Ẩn nút Tạo Tài Khoản mặc định */
+            margin-top: 20px;
+            padding: 10px;
+        }
+        #homeButton {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="1">
+        <h2>Đăng Nhập</h2>
+        <form id="loginForm">
+            <label for="loginEmail">Email hoặc Tên đăng nhập:</label>
+            <input type="text" id="loginEmail" name="email" required>
+            <br>
+            <label for="loginPassword">Mật khẩu:</label>
+            <input type="password" id="loginPassword" name="password" required>
+            <button type="submit">Đăng Nhập</button>
+        </form>
+    </div>
+    
+    <div id="2">
+        <h2>Tạo Tài Khoản</h2>
+        <form id="registerForm">
+            <label for="registerUsername">Tên đăng nhập:</label>
+            <input type="text" id="registerUsername" name="username" required>
+            <br>
+            <label for="registerEmail">Email:</label>
+            <input type="email" id="registerEmail" name="email" required>
+            <br>
+            <label for="registerPassword">Mật khẩu:</label>
+            <input type="password" id="registerPassword" name="password" required>
+            <br>
+            <label for="confirmPassword">Nhập lại Mật khẩu:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+            <br>
+            <button type="submit" id="createAccountButton">Tạo Tài Khoản</button>
+        </form>
+    </div>
+    
+    <div id="3">
+        <button type="button" id="showOtpButton">Gửi OTP</button>
+        <div id="otpSection">
+            <label for="otp">Mã OTP:</label>
+            <input type="text" id="otp" name="otp" required>
+            <button type="button" id="confirmOtpButton">Xác Nhận OTP</button>
+        </div>
+    </div>
+
+    <button id="homeButton" onclick="goToHome()">Trở về trang chủ</button>
+
+    <script>
+        let currentOtp = '';
+
+        document.getElementById('showOtpButton').onclick = function() {
+            const email = document.getElementById('registerEmail').value;
+            fetch('/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Gửi OTP không thành công.');
+                return response.text();
+            })
+            .then(message => {
+                alert(message);
+                document.getElementById('otpSection').style.display = 'block';
+            })
+            .catch(error => alert(error));
+        };
+
+        document.getElementById('confirmOtpButton').onclick = function() {
+            currentOtp = document.getElementById('otp').value;
+            alert('Mã OTP đã được xác nhận. Bạn có thể tạo tài khoản.');
+            document.getElementById('createAccountButton').style.display = 'block'; // Hiện nút Tạo Tài Khoản
+        };
+
+        document.getElementById('registerForm').onsubmit = function(event) {
+            event.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const role = 'members'; // Thiết lập role mặc định
+
+            if (password !== confirmPassword) {
+                alert('Mật khẩu không khớp!');
+                return;
+            }
+
+            fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, otp: currentOtp, role }) // Gửi role
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Đăng ký không thành công.');
+                return response.text();
+            })
+            .then(message => {
+                alert(message);
+                document.getElementById('registerForm').reset();
+                document.getElementById('otpSection').style.display = 'none';
+                currentOtp = ''; // Đặt lại OTP
+                document.getElementById('createAccountButton').style.display = 'none'; // Ẩn nút Tạo Tài Khoản
+            })
+            .catch(error => alert(error));
+        };
+
+        document.getElementById('loginForm').onsubmit = function(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Đăng nhập không thành công.');
+                return response.json(); // Chuyển đổi phản hồi thành JSON
+            })
+            .then(data => {
+                // Lưu tên người dùng, avatar và role vào localStorage
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('avatar', data.avatar); // Nếu có avatar
+                localStorage.setItem('role', data.role); // Lưu vai trò
+                // Chuyển hướng về trang index
+                window.location.href = '../index.html';
+            })
+            .catch(error => alert(error));
+        };
+
+        // Hàm trở về trang chủ
+        function goToHome() {
+            window.location.href = '../index.html'; // Thay đổi đường dẫn đến trang chủ của bạn
+        }
+    </script>
+</body>
+</html>

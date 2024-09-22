@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Mục Chi Tiết</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        #fileTree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 auto;
+        }
+        .folder, .file {
+            margin: 5px 0;
+            cursor: pointer;
+            position: relative;
+            text-align: center;
+            width: 200px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .folder::before {
+            content: '📁 ';
+        }
+        .file::before {
+            content: '📄 ';
+        }
+        .back-button {
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Thư Mục Chi Tiết</h1>
+    <button class="back-button" onclick="goBack()">Quay lại</button>
+    <div id="fileTree"></div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const folderId = urlParams.get('id'); // Lấy ID thư mục từ URL
+        const apiKey = 'AIzaSyCLM4k8LdQfHMxOCrh4QIfMlZr07L1WISE'; // API Key
+
+        // Hàm liệt kê file từ Google Drive API
+        async function listFiles() {
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&key=${apiKey}`);
+            const data = await response.json();
+            createFileTree(document.getElementById('fileTree'), data.files);
+        }
+
+        // Hàm tạo cây thư mục và file
+        function createFileTree(container, fileStructure) {
+            fileStructure.forEach(file => {
+                const item = document.createElement('div');
+                item.className = file.mimeType === 'application/vnd.google-apps.folder' ? 'folder' : 'file';
+                
+                const icon = document.createElement('span');
+                icon.textContent = getIcon(file.name); // Gắn icon cho file dựa trên phần mở rộng
+
+                const fileName = document.createElement('span');
+                fileName.textContent = file.name;
+                
+                item.appendChild(icon);
+                item.appendChild(fileName);
+
+                // Nếu là thư mục, điều hướng sang trang chi tiết thư mục
+                item.addEventListener('click', () => {
+                    if (file.mimeType === 'application/vnd.google-apps.folder') {
+                        window.location.href = `folder.html?id=${file.id}`; // Chuyển hướng đến trang mới nếu là thư mục
+                    } else {
+                        downloadFile(file.id); // Tải xuống file nếu là file
+                    }
+                });
+
+                container.appendChild(item);
+            });
+        }
+
+        // Hàm xác định biểu tượng dựa trên phần mở rộng file
+        function getIcon(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            switch (ext) {
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                case 'bmp':
+                    return '🎨'; // Icon cho hình ảnh
+                case 'txt':
+                case 'doc':
+                case 'docx':
+                case 'xls':
+                case 'xlsx':
+                case 'pdf':
+                    return '📄'; // Icon cho tài liệu
+                case 'zip':
+                case 'rar':
+                case '7z':
+                    return '📂'; // Icon cho tệp nén
+                default:
+                    return '📄'; // Icon mặc định
+            }
+        }
+
+        // Hàm tải file về
+        function downloadFile(fileId) {
+            const link = document.createElement('a');
+            link.href = `https://drive.google.com/uc?export=download&id=${fileId}`; // Liên kết tải file
+            link.download = ''; // Để trống để tự động lấy tên file từ Google Drive
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Xóa liên kết sau khi tải
+        }
+
+        // Hàm quay lại trang trước
+        function goBack() {
+            window.history.back(); // Sử dụng hàm goBack() của history API
+        }
+
+        // Gọi hàm liệt kê file khi trang được load
+        listFiles();
+    </script>
+
+</body>
+</html>

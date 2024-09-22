@@ -1,0 +1,11 @@
+{
+  "datauser": [
+    {
+      "id": 1,
+      "name": "nguyentoan03112005@gmail.com",
+      "username": "Thowm2005",
+      "password": "$2b$10$oWorJUXtUrQjlc3qhTfXO.7A8VSr2GUWaBqY3C3bvZ7AhqHqoagiK",
+      "role": "admin"
+    }
+  ]
+}

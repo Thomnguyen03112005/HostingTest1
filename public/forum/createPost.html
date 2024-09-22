@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Bài Viết</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: blue;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkblue;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tạo Bài Viết Mới</h1>
+
+    <div class="form-group">
+        <label for="title">Tiêu Đề</label>
+        <input type="text" id="title" placeholder="Nhập tiêu đề bài viết" required>
+    </div>
+
+    <div class="form-group">
+        <label for="content">Nội Dung</label>
+        <textarea id="content" rows="10" placeholder="Nhập nội dung bài viết" required></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="category">Thể Loại</label>
+        <input type="text" id="category" placeholder="Nhập thể loại bài viết">
+    </div>
+
+    <button id="submitPostButton">Đăng Bài</button>
+
+    <script>
+        document.getElementById('submitPostButton').onclick = function() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const category = document.getElementById('category').value;
+            const username = localStorage.getItem('username');
+
+            if (!username) {
+                alert('Bạn cần đăng nhập để tạo bài viết.');
+                window.location.href = './login/login.html'; // Chuyển hướng đến trang đăng nhập
+                return;
+            }
+
+            const newPost = {
+                id: Date.now(), // Sử dụng thời gian hiện tại làm ID duy nhất
+                username: username,
+                Title: title,
+                Noidung: content,
+                theloai: category,
+                time: new Date().toISOString()
+            };
+
+            // Ghi bài viết mới vào forum.json
+            fetch('/data/forum.json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newPost)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Bài viết đã được đăng thành công!');
+                    window.location.href = '../forum/index.html'; // Quay lại trang diễn đàn
+                } else {
+                    alert('Đã xảy ra lỗi khi đăng bài viết.');
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi:', error);
+                alert('Đã xảy ra lỗi khi đăng bài viết.');
+            });
+        };
+    </script>
+</body>
+</html>

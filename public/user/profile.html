@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #ccc; /* Màu nền cho avatar */
+            display: block;
+            margin: 20px auto;
+            background-size: cover; /* Đảm bảo hình ảnh trong avatar hiển thị đúng kích thước */
+        }
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trang Cá Nhân</h1>
+    <div class="avatar" id="avatarDisplay"></div>
+    <input type="file" id="avatarInput" accept="image/*">
+    <button id="saveAvatarButton">Lưu Avatar</button>
+    <button id="backButton">Quay lại Trang Chủ</button>
+
+    <script>
+        const avatarDisplay = document.getElementById('avatarDisplay');
+        const avatarInput = document.getElementById('avatarInput');
+        const saveAvatarButton = document.getElementById('saveAvatarButton');
+        const backButton = document.getElementById('backButton');
+
+        // Hiển thị avatar hiện tại
+        const avatar = localStorage.getItem('avatar');
+        if (avatar) {
+            avatarDisplay.style.backgroundImage = `url(${avatar})`;
+        }
+
+        // Xử lý sự kiện tải avatar
+        saveAvatarButton.onclick = function() {
+            const file = avatarInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    avatarDisplay.style.backgroundImage = `url(${imageUrl})`;
+                    localStorage.setItem('avatar', imageUrl); // Lưu avatar vào localStorage
+                    uploadAvatar(imageUrl); // Gọi hàm lưu avatar vào profile.json
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // Quay lại trang chủ
+        backButton.onclick = function() {
+            window.location.href = '../index.html'; // Chuyển hướng về trang index
+        };
+
+
+        
+
+        // Hàm lưu avatar vào profile.json
+        function uploadAvatar(imageUrl) {
+            const username = localStorage.getItem('username'); // Lấy tên người dùng từ localStorage
+            if (!username) {
+                alert('Vui lòng đăng nhập trước khi tải ảnh.');
+                return;
+            }
+        
+            fetch('/data/profile.json')
+                .then(response => response.json())
+                .then(data => {
+                    // Kiểm tra xem user đã có trong danh sách avatars hay chưa
+                    let existingUser = data.avatars.find(avatar => avatar.username === username);
+                    
+                    if (existingUser) {
+                        existingUser.Link = imageUrl; // Cập nhật đường dẫn ảnh
+                    } else {
+                        // Nếu user chưa tồn tại, thêm mới với username và link avatar
+                        data.avatars.push({ username: username, Link: imageUrl });
+                    }
+        
+                    // Lưu lại thay đổi vào profile.json
+                    fetch('/saveProfile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data) // Gửi dữ liệu cập nhật
+                    })
+                    .then(() => {
+                        localStorage.setItem('avatar', imageUrl); // Lưu avatar vào localStorage để hiển thị ngay
+                        alert('Avatar đã được cập nhật thành công!');
+                    })
+                    .catch(error => console.error('Lỗi khi lưu avatar:', error));
+                })
+                .catch(error => console.error('Lỗi khi tải profile.json:', error));
+        }
+    </script>
+</body>
+</html>

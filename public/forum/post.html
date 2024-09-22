@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Viết</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #postContent {
+            margin: 20px 0;
+        }
+        #comments {
+            margin-top: 20px;
+        }
+        .comment {
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .deleteButton {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="goBack()">Trở lại</button>
+
+    <h1 id="postTitle"></h1>
+    <div id="postContent"></div>
+
+    <div id="commentsSection">
+        <h2>Bình luận</h2>
+        <textarea id="commentInput" placeholder="Nhập bình luận ở đây..." rows="4"></textarea>
+        <button id="commentButton" onclick="submitComment()">Bình luận</button>
+    </div>
+    <div id="comments"></div>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        async function fetchPost() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+
+            try {
+                const response = await fetch(`/api/posts/${postId}`);
+                const post = await response.json();
+
+                if (post) {
+                    document.getElementById('postTitle').textContent = post.Title;
+                    document.getElementById('postContent').textContent = post.noidung;
+                    fetchComments(postId); // Tải bình luận
+                } else {
+                    console.error('Bài viết không tồn tại.');
+                }
+            } catch (error) {
+                console.error('Error fetching post:', error);
+            }
+        }
+
+        async function fetchComments(postId) {
+            try {
+                const response = await fetch(`/api/comments?postId=${postId}`);
+                const comments = await response.json();
+                const commentsContainer = document.getElementById('comments');
+                commentsContainer.innerHTML = '';
+
+                comments.forEach(comment => {
+                    const commentDiv = document.createElement('div');
+                    commentDiv.className = 'comment';
+                    commentDiv.innerHTML = `
+                        ${comment.username}: ${comment.noidung}
+                        <button class="deleteButton" onclick="deleteComment(${comment.id})">Xóa</button>
+                    `;
+                    commentsContainer.appendChild(commentDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching comments:', error);
+            }
+        }
+
+        async function deleteComment(commentId) {
+            try {
+                const response = await fetch(`/api/comments/${commentId}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const postId = urlParams.get('id');
+                    fetchComments(postId); // Tải lại bình luận
+                } else {
+                    console.error('Failed to delete comment:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error deleting comment:', error);
+            }
+        }
+
+        async function submitComment() {
+            const username = localStorage.getItem('username');
+            if (!username) {
+                alert('Bạn cần đăng nhập để bình luận. Chuyển đến trang đăng nhập.');
+                window.location.href = '../login/login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+            const commentContent = document.getElementById('commentInput').value;
+
+            if (!commentContent) {
+                alert('Vui lòng nhập bình luận.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        postId: postId,
+                        username: username,
+                        noidung: commentContent
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('commentInput').value = ''; // Xóa nội dung khung nhập
+                    fetchComments(postId); // Tải lại bình luận
+                } else {
+                    console.error('Failed to submit comment:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error submitting comment:', error);
+            }
+        }
+
+        // Gọi hàm khi trang được tải
+        fetchPost();
+    </script>
+</body>
+</html>

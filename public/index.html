@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: #ccc;
+            cursor: pointer;
+            background-size: cover;
+        }
+        .username {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        #adminButton {
+            margin-left: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chào mừng đến với Website của tôi!</h1>
+    <nav>
+        <a href="/">Trang Chủ</a>
+        <a href="./about.html">Giới Thiệu</a>
+        <a href="./login/login.html">Login</a>
+        <a href="./forum/index.html">Forum</a>
+        <a href="./database/index.html">Data</a>
+        <a href="./admin/index.html">control_panel</a>
+        <button id="logoutButton" style="display: none;">Đăng Xuất</button>
+        <button id="adminButton" onclick="goToAdmin()">Vào Trang Admin</button>
+    </nav>
+
+    <div id="userSection">
+        <div class="avatar" id="avatarDisplay" onclick="goToProfile()"></div>
+        <span class="username" id="usernameDisplay" onclick="goToProfile()">Khách</span>
+    </div>
+
+    <script>
+        function goToProfile() {
+            const username = localStorage.getItem('username');
+            window.location.href = username ? './user/profile.html' : './login/login.html';
+        }
+
+        function goToAdmin() {
+            window.location.href = '../admin/index.html';
+        }
+
+        function updateUserInterface() {
+            const username = localStorage.getItem('username');
+            const avatar = localStorage.getItem('avatar');
+            const role = localStorage.getItem('role');
+
+            if (username) {
+                document.getElementById('usernameDisplay').textContent = username;
+                if (avatar) {
+                    document.getElementById('avatarDisplay').style.backgroundImage = `url(${avatar})`;
+                }
+                document.getElementById('logoutButton').style.display = 'block';
+                if (role === 'admin') {
+                    document.getElementById('adminButton').style.display = 'inline-block';
+                }
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('avatar');
+            localStorage.removeItem('role');
+            alert('Bạn đã đăng xuất thành công.');
+            updateUserInterface();
+            window.location.href = './login/login.html'; // Chuyển hướng về trang đăng nhập
+        }
+
+        document.getElementById('logoutButton').onclick = handleLogout;
+
+        // Cập nhật giao diện khi trang được tải
+        updateUserInterface();
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            margin-bottom: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Đăng Nhập Admin</h2>
+    <form id="adminLoginForm">
+        <label for="adminEmail">Email:</label>
+        <input type="text" id="adminEmail" name="email" required>
+        <br>
+        <label for="adminPassword">Mật khẩu:</label>
+        <input type="password" id="adminPassword" name="password" required>
+        <button type="submit">Đăng Nhập</button>
+    </form>
+
+    <script>
+        document.getElementById('adminLoginForm').onsubmit = function(event) {
+            event.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            fetch('/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    alert('Đăng nhập không thành công.'); // Thông báo lỗi
+                    window.location.href = '../index.html'; // Quay về trang chủ
+                    throw new Error('Đăng nhập không thành công.');
+                }
+                return response.json(); // Chuyển đổi phản hồi thành JSON
+            })
+            .then(data => {
+                // Nếu đăng nhập thành công và là admin, chuyển hướng đến trang control panel
+                if (data.role === 'admin') {
+                    window.location.href = 'admin_control_panel.html'; // Đường dẫn đến trang control panel
+                } else {
+                    alert('Không được đăng nhập vào trang admin!');
+                    window.location.href = '../index.html'; // Quay về trang chủ
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                // Đã xử lý trong phần điều kiện trên
+            });
+        };
+    </script>
+</body>
+</html>

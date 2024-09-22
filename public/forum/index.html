@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn Đàn</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .post {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .post-title {
+            font-weight: bold;
+            color: blue;
+            cursor: pointer;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: #ccc; 
+            cursor: pointer;
+            background-size: cover;
+        }
+        .username {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        #createPostButton {
+            display: none; /* Ẩn nút tạo bài viết mặc định */
+            margin-top: 20px;
+        }
+        #homeButton {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diễn Đàn</h1>
+
+    <div id="userSection">
+        <div class="avatar" id="avatarDisplay" onclick="goToProfile()"></div>
+        <span class="username" id="usernameDisplay" onclick="goToProfile()">Khách</span>
+        <button id="logoutButton" style="display: none;">Đăng Xuất</button>
+    </div>
+    <button id="homeButton" onclick="goToHome()">Trở về trang chủ</button>
+    <button id="createPostButton" onclick="goToCreatePost()">Tạo Bài Viết</button>
+
+    <h2>Bài Viết</h2>
+    <div id="posts"></div>
+
+    <script>
+        // Hàm chuyển hướng đến trang profile
+        function goToProfile() {
+            const username = localStorage.getItem('username');
+            window.location.href = username ? './user/profile.html' : './login/login.html';
+        }
+
+        // Hàm chuyển hướng đến trang tạo bài viết
+        function goToCreatePost() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                window.location.href = './createPost.html';
+            } else {
+                alert('Bạn cần đăng nhập để tạo bài viết.');
+                window.location.href = './login/login.html';
+            }
+        }
+
+        // Hàm trở về trang chủ
+        function goToHome() {
+            window.location.href = '../../index.html'; // Thay đổi đường dẫn đến trang chủ của bạn
+        }
+
+        // Hiển thị thông tin người dùng
+        const username = localStorage.getItem('username');
+        const avatar = localStorage.getItem('avatar');
+
+        if (username) {
+            document.getElementById('usernameDisplay').textContent = username;
+            if (avatar) {
+                document.getElementById('avatarDisplay').style.backgroundImage = `url(${avatar})`;
+            }
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('createPostButton').style.display = 'inline-block';
+        }
+
+        // Xử lý sự kiện đăng xuất
+        document.getElementById('logoutButton').onclick = function() {
+            if (username) {
+                localStorage.removeItem('username');
+                localStorage.removeItem('avatar');
+                document.getElementById('usernameDisplay').textContent = 'Khách';
+                document.getElementById('avatarDisplay').style.backgroundImage = '';
+                alert('Bạn đã đăng xuất thành công.');
+                this.style.display = 'none';
+                document.getElementById('createPostButton').style.display = 'none';
+            }
+        };
+
+        // Lấy dữ liệu bài viết từ API và hiển thị
+        async function fetchPosts() {
+            try {
+                const response = await fetch('/api/posts');
+                const posts = await response.json();
+                const postsContainer = document.getElementById('posts');
+                postsContainer.innerHTML = '';
+
+                posts.Forum.forEach(post => {
+                    const postDiv = document.createElement('div');
+                    postDiv.className = 'post';
+                    postDiv.innerHTML = `
+                        <div class="post-title" onclick="viewPost(${post.id})">${post.Title}</div>
+                        <div>Người tạo: ${post.username || 'Khách'}</div>
+                        <div>Thời gian: ${new Date(post.time).toLocaleString()}</div>
+                    `;
+                    postsContainer.appendChild(postDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching posts:', error);
+            }
+        }
+
+        // Hàm xem bài viết
+        function viewPost(postId) {
+            window.location.href = `./post.html?id=${postId}`; // Chuyển đến trang xem bài viết
+        }
+
+        // Gọi hàm lấy bài viết khi trang được tải
+        fetchPosts();
+    </script>
+</body>
+</html>
